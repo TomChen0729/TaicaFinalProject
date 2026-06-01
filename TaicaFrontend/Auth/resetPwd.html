@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>設定新密碼</title>
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <h2>設定新密碼 🔐</h2>
+        <p class="auth-subtitle">請輸入您的全新密碼</p>
+
+        <form id="resetForm">
+            <div class="form-group">
+                <label>新密碼 (New Password)</label>
+                <input type="password" id="password" required placeholder="至少 6 位數">
+            </div>
+            <div class="form-group">
+                <label>確認新密碼 (Confirm Password)</label>
+                <input type="password" id="password_confirmation" required placeholder="請再次輸入密碼">
+            </div>
+            <button type="submit" class="auth-btn">確認修改密碼</button>
+        </form>
+    </div>
+
+    <script>
+        // 從網址自動抓取信件帶來的 token 與 email
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const email = urlParams.get('email');
+
+        if (!token || !email) {
+            alert('無效的重設連結！');
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const password_confirmation = document.getElementById('password_confirmation').value;
+
+            try {
+                const response = await fetch('http://127.0.0.1:82/api/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ token, email, password, password_confirmation })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message);
+                    window.location.href = 'login.html'; // 改完密碼請他重新登入
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('重設失敗，請稍後再試');
+            }
+        });
+    </script>
+</body>
+</html>

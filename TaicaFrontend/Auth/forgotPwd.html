@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>忘記密碼</title>
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <h2>忘記密碼 🤔</h2>
+        <p class="auth-subtitle">輸入您的 Email，我們將寄送重設連結給您</p>
+
+        <form id="forgotForm">
+            <div class="form-group">
+                <label>電子郵件 (Email)</label>
+                <input type="email" id="email" required placeholder="請輸入您註冊時的信箱">
+            </div>
+            <button type="submit" class="auth-btn">發送重設信件</button>
+        </form>
+        <div class="auth-footer"><a href="login.html">返回登入</a></div>
+    </div>
+
+    <script>
+        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const btn = document.querySelector('.auth-btn');
+            
+            btn.textContent = '發送中...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('http://127.0.0.1:82/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                alert('伺服器連線失敗');
+            } finally {
+                btn.textContent = '發送重設信件';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,582 @@
+/* ==========================================
+   共用基礎設定
+========================================== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* ==========================================
+   對話頁面專屬樣式 (chat.html & test.html)
+========================================== */
+.chat-page-body {
+    background-color: #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.back-btn {
+    align-self: flex-start;
+    margin-bottom: 15px;
+    text-decoration: none;
+    color: #4b5563;
+    font-weight: bold;
+    background: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 400px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    overflow: hidden;
+}
+
+.chat-header {
+    background-color: #ef4444; 
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.task-hint {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 10px;
+    font-size: 0.9rem;
+    text-align: center;
+    border-bottom: 1px solid #fca5a5;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.message {
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.message.ai {
+    background-color: #f3f4f6;
+    color: #1f2937;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+}
+
+.message.user {
+    background-color: #ef4444;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+}
+
+.chat-controls {
+    padding: 15px;
+    background-color: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#recordButton {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    font-weight: bold;
+    user-select: none;
+}
+
+#recordButton.recording {
+    background-color: #10b981;
+    animation: pulse 1.5s infinite;
+}
+
+#statusText {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* ==========================================
+   首頁專屬樣式 (index.html)
+========================================== */
+.home-body {
+    background-color: #f8fafc;
+}
+
+.home-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    box-sizing: border-box;
+}
+
+.hero-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.hero-header h1 {
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: 15px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.hero-header p {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr; 
+    gap: 25px;
+}
+
+@media (min-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.card {
+    background: white;
+    padding: 30px 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    border-color: #ef4444;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+}
+
+.card-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-easy {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.badge-medium {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.emoji {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    text-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.scenario-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #1e293b;
+    margin-bottom: 10px;
+}
+
+.scenario-desc {
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 25px;
+    flex-grow: 1; 
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.2s;
+    flex: 1;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.btn-primary {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #dc2626;
+}
+
+.btn-test {
+    background-color: #f59e0b;
+    color: white;
+}
+
+.btn-test:hover {
+    background-color: #d97706;
+}
+
+/* ==========================================
+   追加：會員認證與狀態列樣式 (Auth & Member Bar)
+========================================== */
+.member-bar {
+    width: 100%;
+    background-color: #1e293b;
+    color: #f8fafc;
+    padding: 10px 0;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.member-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.login-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: bold;
+    background: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: opacity 0.2s;
+}
+
+.logout-link {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.login-link:hover, .logout-link:hover {
+    opacity: 0.9;
+}
+
+/* 認證頁面佈局 */
+.auth-body {
+    background-color: #f1f5f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.auth-container {
+    background: white;
+    width: 100%;
+    max-width: 400px;
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+    box-sizing: border-box;
+}
+
+.auth-container h2 {
+    margin: 0 0 8px 0;
+    color: #0f172a;
+    text-align: center;
+}
+
+.auth-subtitle {
+    margin: 0 0 25px 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #334155;
+}
+
+.form-group input {
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #ef4444;
+}
+
+.auth-btn {
+    width: 100%;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.2s;
+}
+
+.auth-btn:hover {
+    background-color: #dc2626;
+}
+
+.auth-footer {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.auth-footer a {
+    color: #ef4444;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* ==========================================
+   追加：學習儀表板專屬樣式 (Dashboard)
+========================================== */
+.dashboard-body {
+    background-color: #f1f5f9;
+    padding-bottom: 50px;
+}
+
+.dash-navbar {
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.dash-nav-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dash-logo {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #1e293b;
+}
+
+.dash-links {
+    display: flex;
+    gap: 10px;
+}
+
+.dash-btn-outline {
+    border: 1px solid #cbd5e1;
+    background: transparent;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.dash-btn-outline:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.dash-btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.dash-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.dash-header h1 {
+    font-size: 2rem;
+    color: #0f172a;
+    margin-bottom: 5px;
+}
+
+.dash-header p {
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+/* 數據卡片區塊 */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.stat-title {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #3b82f6;
+}
+
+/* 歷史紀錄區塊 */
+.history-section h2 {
+    font-size: 1.3rem;
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.history-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-fail { background: #fee2e2; color: #991b1b; }
+
+.history-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-bubble {
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.user-bubble { background: #f8fafc; color: #475569; border-left: 4px solid #94a3b8; }
+.ai-bubble { background: #eff6ff; color: #1e40af; border-left: 4px solid #3b82f6; }

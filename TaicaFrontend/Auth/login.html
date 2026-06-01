@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>會員登入 - 實用英語生存指南</title>
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body class="auth-body">
+    <div class="auth-container">
+        <h2>會員登入 🔑</h2>
+        <p class="auth-subtitle">登入以紀錄您的英語學習歷程</p>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>電子郵件 (Email)</label>
+                <input type="email" id="email" required placeholder="example@email.com">
+            </div>
+            <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label style="margin-bottom: 0;">密碼 (Password)</label>
+                    <a href="forgotPwd.html" style="font-size: 0.8rem; color: #ef4444; text-decoration: none; font-weight: bold;">忘記密碼？</a>
+                </div>
+                <input type="password" id="password" required placeholder="請輸入密碼">
+            </div>
+            <button type="submit" class="auth-btn">確認登入</button>
+        </form>
+
+        <div class="auth-footer">
+            還沒有帳號？ <a href="register.html">立即註冊</a> | <a href="index.html">返回首頁</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://127.0.0.1:82/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || '登入失敗');
+                }
+
+                // 登入成功：將 Token 與用戶名稱存入 localStorage
+                localStorage.setItem('auth_token', data.token);
+                localStorage.setItem('user_name', data.user.name);
+
+                alert('登入成功！將跳轉回首頁。');
+                window.location.href = '../index.html';
+
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    </script>
+</body>
+</html>

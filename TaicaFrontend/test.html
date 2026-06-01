@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【測試版】實戰英語對話</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body class="chat-page-body">
+    <a href="index.html" class="back-btn">⬅ 回首頁</a>
+    <div class="chat-container">
+        
+        <div class="chat-header" id="ui-header" style="background-color: #f59e0b;">🔧 開發測試模式</div>
+        <div class="task-hint" id="ui-task">載入任務中...</div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai" id="ui-greeting">Loading...</div>
+        </div>
+
+        <div class="chat-controls">
+            <button id="recordButton" style="opacity: 0.5;">麥克風錄音 (目前無設備)</button>
+            <div id="statusText">請使用下方上傳功能測試</div>
+            
+            <hr style="width: 100%; border: 0.5px solid #e5e7eb; margin: 10px 0;">
+            <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 5px; text-align: center;">上傳本地音檔 (.mp3 / .wav / .webm)</div>
+            <input type="file" id="testAudio" accept="audio/*" style="font-size: 0.8rem; margin-bottom: 8px; width: 100%;">
+            <button id="uploadTestBtn" style="background-color: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold;">發送測試音檔</button>
+        </div>
+    </div>
+
+    <script src="js/index.js" defer></script>
+</body>
+</html>

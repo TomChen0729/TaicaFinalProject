@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>實用英語生存指南</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body class="home-body">
+    
+    <div class="member-bar">
+        <div class="member-inner">
+            <div id="userStatusText">載入中...</div>
+            <div id="authActions"></div>
+        </div>
+    </div>
+
+    <div class="home-container">
+        <div class="hero-header">
+            <h1>日常英語生存對話 🗣️</h1>
+            <p>選擇一個生活情境，開始與 AI 進行實戰練習！</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-badge badge-easy">🟢 入門</div>
+                <div class="emoji">🍔</div>
+                <div class="scenario-title">速食店點餐</div>
+                <div class="scenario-desc">任務：點一份辣味麥脆雞套餐與飲料</div>
+                <div class="action-buttons login-required-btns">
+                    </div>
+            </div>
+
+            <div class="card">
+                <div class="card-badge badge-easy">🟢 入門</div>
+                <div class="emoji">🛒</div>
+                <div class="scenario-title">超市結帳</div>
+                <div class="scenario-desc">任務：回答是否需要塑膠袋與支付方式</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-badge badge-medium">🟡 進階</div>
+                <div class="emoji">🗺️</div>
+                <div class="scenario-title">街頭問路</div>
+                <div class="scenario-desc">任務：向路人詢問最近的車站在哪裡</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-badge badge-medium">🟡 進階</div>
+                <div class="emoji">🛂</div>
+                <div class="scenario-title">海關入境</div>
+                <div class="scenario-desc">任務：向海關說明旅遊目的與停留天數</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('auth_token');
+            const userName = localStorage.getItem('user_name');
+            
+            const userStatusText = document.getElementById('userStatusText');
+            const authActions = document.getElementById('authActions');
+            const btnContainers = document.querySelectorAll('.login-required-btns');
+
+            if (token && userName) {
+                // 使用者已登入狀態
+                userStatusText.textContent = `歡迎回來，${userName} 同學 👋`;
+                authActions.innerHTML = `
+                    <a href="dashboard.html" class="login-link" style="margin-right: 10px;">進入我的後台 📊</a>
+                    <button id="logoutBtn" class="logout-link">安全登出</button>
+                `;
+
+                // 渲染各關卡的對話與測試按鈕
+                btnContainers.forEach(container => {
+                    // 根據卡片位置或特定屬性取得情境代號，這裡依序對應
+                    let scenario = 'fast_food';
+                    if (container.closest('.card').querySelector('.scenario-title').textContent.includes('超市')) scenario = 'supermarket';
+                    if (container.closest('.card').querySelector('.scenario-title').textContent.includes('問路')) scenario = 'directions';
+                    if (container.closest('.card').querySelector('.scenario-title').textContent.includes('海關')) scenario = 'immigration';
+
+                    container.innerHTML = `
+                        <a href="chat.html?scenario=${scenario}" class="btn btn-primary">正式錄影版</a>
+                        <a href="test.html?scenario=${scenario}" class="btn btn-test">測試上傳版</a>
+                    `;
+                });
+
+                // 綁定登出按鈕事件
+                document.getElementById('logoutBtn').addEventListener('click', async () => {
+                    try {
+                        // 呼叫後端登出 API
+                        await fetch('http://127.0.0.1:82/api/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                    } catch (e) {
+                        console.error('後端 Token 銷毀失敗，直接清除本機快取');
+                    } finally {
+                        // 無論後端成功與否，本機都要清除狀態
+                        localStorage.clear();
+                        alert('已安全登出！');
+                        window.location.reload();
+                    }
+                });
+
+            } else {
+                // 使用者未登入狀態
+                userStatusText.textContent = '🔒 目前處於訪客模式，請先登入系統';
+                authActions.innerHTML = `<a href="Auth/login.html" class="login-link">會員登入 / 註冊</a>`;
+
+                // 限制進入，顯示提示按鈕
+                btnContainers.forEach(container => {
+                    container.innerHTML = `<a href="Auth/login.html" class="btn" style="background-color: #cbd5e1; color: #475569;">請先登入以解鎖關卡</a>`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
