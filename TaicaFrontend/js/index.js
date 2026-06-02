@@ -29,7 +29,7 @@ async function initScenarioConfig() {
         if (statusText) statusText.textContent = '正在載入關卡設定...';
 
         // 呼叫我們剛建好的 Laravel 路由
-        const response = await fetch(`http://127.0.0.1:82/api/scenarios/${currentScenario}`, {
+        const response = await fetch(`http://127.0.0.1:8000/api/scenarios/${currentScenario}`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         });
@@ -176,7 +176,7 @@ async function sendToLaravel(audioData) {
     formData.append('scenario', currentScenario);
 
     try {
-        const response = await fetch('http://127.0.0.1:82/api/chat', {
+        const response = await fetch('http://127.0.0.1:8000/api/chat', {
             method: 'POST',
             body: formData,
             headers: {

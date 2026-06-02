@@ -23,6 +23,7 @@ class ChatService
             return [
                 'user_text' => '(聽不清楚)',
                 'ai_reply' => 'I could not hear clearly. Could you repeat that?',
+                'suggestion' => '請試著靠近麥克風再說一次。',
                 'is_success' => false
             ];
         }
@@ -30,29 +31,13 @@ class ChatService
         // 2. 透過私有方法，直接去資料庫撈取當前關卡的 System Prompt
         $systemPrompt = $this->getSystemPromptByScenario($scenarioId);
 
-        // 3. 將文字與動態 Prompt 送給 LLM 產生回覆 (維持使用地端 Ollama)
-        $aiReply = $this->generateReply($userText, $systemPrompt);
+        // 3. 將文字與動態 Prompt 送給 LLM 產生回覆 (此時 $llmResult 是一個陣列)
+        $llmResult = $this->generateReply($userText, $systemPrompt);
 
-        // 4. 任務條件與導師建議解析
-        $isSuccess = false;
-        $suggestion = null;
-
-        // 檢查地端 Gemma2 的回覆中是否包含 [SUCCESS] 標籤
-        if (strpos($aiReply, '[SUCCESS]') !== false) {
-            $isSuccess = true;
-            // 剔除標籤
-            $aiReply = str_replace('[SUCCESS]', '', $aiReply);
-        }
-
-        // 檢查回覆中是否包含 [SUGGESTION] 標籤
-        if (strpos($aiReply, '[SUGGESTION]') !== false) {
-            $parts = explode('[SUGGESTION]', $aiReply);
-            $aiReply = $parts[0]; // 前半段保留為給前端發音的對話
-            $suggestion = trim($parts[1] ?? ''); // 後半段獨立抽出來作為導師建議
-        }
-
-        // 清理多餘的空白字元
-        $aiReply = trim($aiReply);
+        // 4. 任務條件與導師建議解析 (直接從 JSON 解析出的陣列取值，並賦予預設值防呆)
+        $aiReply = $llmResult['ai_reply'] ?? 'Got it. Let us continue.';
+        $isSuccess = $llmResult['is_success'] ?? false;
+        $suggestion = $llmResult['suggestion'] ?? null;
 
         // 5. 執行核心資料庫記錄，將對話、建議及通關結果綁定該會員帳號
         Conversation::create([
@@ -64,10 +49,11 @@ class ChatService
             'is_success' => $isSuccess
         ]);
 
-        // 6. 回傳最終結構給 Controller
+        // 6. 回傳最終結構給 Controller / 前端
         return [
             'user_text' => $userText,
             'ai_reply' => $aiReply,
+            'suggestion' => $suggestion, // 建議也回傳給前端，方便在畫面上顯示導師回饋
             'is_success' => $isSuccess
         ];
     }
@@ -97,29 +83,40 @@ class ChatService
     }
 
     /**
-     * 呼叫地端 Ollama 產生對話回覆
+     * 呼叫地端 Ollama 產生對話回覆與評估
      */
-    private function generateReply(string $userText, string $systemPrompt): string
+    private function generateReply(string $userText, string $systemPrompt): array
     {
-        // 🔹 改動：拿掉結尾的 \nCashier:，改用明確的指令分隔符號，並再次強烈提醒它輸出標籤
+        // 移除容易解析失敗的自訂標籤，改為明確要求純 JSON 輸出
         $fullPrompt = "{$systemPrompt}\n\n"
-                    . "Customer says: \"{$userText}\"\n\n"
-                    . "Your response (Must include [SUCCESS] and [SUGGESTION] tags if applicable):";
+                    . "Student says: \"{$userText}\"\n\n"
+                    . "Please strictly output your evaluation in JSON format.";
 
-        $response = Http::timeout(30)->post('http://127.0.0.1:11434/api/generate', [
-            'model' => 'gemma2:2b',
+        $response = Http::timeout(120)->post('http://127.0.0.1:11434/api/generate', [
+            'model' => 'qwen2.5:7b',
             'prompt' => $fullPrompt,
+            'format' => 'json', // 🚀 關鍵改動：強制 Ollama 回傳 JSON 結構
             'stream' => false,
             'options' => [
-                'temperature' => 0.6
+                'temperature' => 0.2, // 🚀 降低溫度，確保評分標準一致與格式穩定
+                'num_ctx' => 2048     // 🚀 限制上下文長度，保護 6GB VRAM 不溢出
             ]
         ]);
 
         if ($response->failed()) {
-            throw new Exception('Ollama API 錯誤: ' . $response->body());
+            throw new Exception('Ollama API 連線錯誤: ' . $response->body());
         }
 
-        return trim($response->json('response'));
+        $responseText = trim($response->json('response'));
+        
+        // 將 LLM 回傳的 JSON 字串直接轉為 PHP 陣列，方便後續邏輯操作
+        $result = json_decode($responseText, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('LLM 回傳的不是有效的 JSON 格式: ' . $responseText);
+        }
+
+        return $result;
     }
 
     /**

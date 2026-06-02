@@ -92,7 +92,7 @@
                 document.getElementById('logoutBtn').addEventListener('click', async () => {
                     try {
                         // 呼叫後端登出 API
-                        await fetch('http://127.0.0.1:82/api/logout', {
+                        await fetch('http://127.0.0.1:8000/api/logout', {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`,

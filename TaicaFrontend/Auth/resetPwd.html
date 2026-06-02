@@ -40,7 +40,7 @@
             const password_confirmation = document.getElementById('password_confirmation').value;
 
             try {
-                const response = await fetch('http://127.0.0.1:82/api/reset-password', {
+                const response = await fetch('http://127.0.0.1:8000/api/reset-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ token, email, password, password_confirmation })
