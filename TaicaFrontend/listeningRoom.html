@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聽力實戰室 - 模擬對話</title>
+    <link rel="stylesheet" href="css/index.css">
+    <style>
+        /* 📱 手機對話框模組專用樣式 */
+        .phone-container { width: 100%; max-width: 400px; height: 80vh; max-height: 750px; margin: 30px auto; background: #e5ddd5; border-radius: 35px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 8px solid #ffffff; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .phone-header { background: #f8f9fa; padding: 15px; text-align: center; font-weight: bold; color: #1e293b; border-bottom: 1px solid #e2e8f0; }
+        .chat-window { flex: 1; padding: 20px 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .bubble { max-width: 75%; padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; animation: popIn 0.3s ease-out forwards; opacity: 0; transform: translateY(10px); }
+        @keyframes popIn { to { opacity: 1; transform: translateY(0); } }
+        .bubble-system { background: #ffffff; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #334155; }
+        .bubble-user { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #166534; }
+        .bubble-tutor { background: #fffbeb; align-self: flex-start; border-bottom-left-radius: 4px; border-left: 4px solid #f59e0b; box-shadow: 0 1px 2px rgba(0,0,0,0.1); color: #b45309; font-size: 0.9rem; }
+        audio { height: 40px; width: 220px; outline: none; }
+        .options-area { background: #f0f2f5; padding: 15px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #e2e8f0; }
+        .option-btn { background: #ffffff; border: 1px solid #cbd5e1; padding: 12px; border-radius: 10px; font-size: 1rem; color: #1e293b; cursor: pointer; transition: 0.2s; text-align: left; }
+        .option-btn:hover { background: #f8fafc; border-color: #94a3b8; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="home-body">
+
+    <nav class="top-navbar">
+        <div class="nav-left">
+            <a href="listening.html" class="btn-back">⬅️ 返回大廳</a>
+            <div class="page-title">🎧 聽力挑戰</div>
+        </div>
+    </nav>
+
+    <div class="phone-container">
+        <div class="phone-header" id="taskTitle">連線中...</div>
+        <div class="chat-window" id="chatWindow"></div>
+        <div class="options-area hidden" id="optionsArea"></div>
+    </div>
+
+    <script>
+        const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:82/api';
+        const token = localStorage.getItem('auth_token');
+        let currentTaskId = null;
+
+        if (!token) {
+            alert('請先登入會員！');
+            window.location.href = 'auth/login.html';
+        }
+
+        const chatWindow = document.getElementById('chatWindow');
+        const optionsArea = document.getElementById('optionsArea');
+        const taskTitle = document.getElementById('taskTitle');
+
+        function scrollToBottom() {
+            setTimeout(() => { chatWindow.scrollTop = chatWindow.scrollHeight; }, 100);
+        }
+
+        function addBubble(type, content) {
+            const bubble = document.createElement('div');
+            bubble.className = `bubble bubble-${type}`;
+            bubble.innerHTML = content;
+            chatWindow.appendChild(bubble);
+            scrollToBottom();
+        }
+
+        async function fetchTask() {
+            try {
+                taskTitle.textContent = "載入題目中...";
+                const urlParams = new URLSearchParams(window.location.search);
+                const queryTaskId = urlParams.get('task');
+                
+                const fetchUrl = queryTaskId 
+                    ? `${apiUrl}/listening/task?task_id=${queryTaskId}` 
+                    : `${apiUrl}/listening/task`;
+
+                const response = await fetch(fetchUrl, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    window.location.href = 'auth/login.html';
+                    return;
+                }
+
+                const task = await response.json();
+                currentTaskId = task.task_id;
+                taskTitle.textContent = task.title;
+
+                setTimeout(() => {
+                    addBubble('system', `
+                        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 5px;">▶️ 收到一則語音訊息</div>
+                        <audio controls src="${task.audio_url}"></audio>
+                    `);
+                }, 500);
+
+                setTimeout(() => {
+                    addBubble('system', task.question);
+                    renderOptions(task.options);
+                }, 1500);
+
+            } catch (error) {
+                taskTitle.textContent = "載入失敗";
+            }
+        }
+
+        function renderOptions(options) {
+            optionsArea.innerHTML = '';
+            for (const [key, text] of Object.entries(options)) {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = `${key}. ${text}`;
+                btn.onclick = () => submitAnswer(key, text);
+                optionsArea.appendChild(btn);
+            }
+            optionsArea.classList.remove('hidden');
+            scrollToBottom();
+        }
+
+        async function submitAnswer(selectedKey, selectedText) {
+            optionsArea.classList.add('hidden');
+            addBubble('user', selectedText);
+
+            setTimeout(async () => {
+                try {
+                    const response = await fetch(`${apiUrl}/listening/submit`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            task_id: currentTaskId,
+                            user_answer: selectedKey
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.is_success) {
+                        addBubble('system', '🎉 答對了！聽力很敏銳！');
+                    } else {
+                        addBubble('system', `❌ 答錯囉，正確解答是 ${result.correct_answer}。`);
+                    }
+
+                    if (result.suggestion) {
+                        setTimeout(() => {
+                            addBubble('tutor', `<strong>💡 學習筆記：</strong><br>${result.suggestion}`);
+                            
+                            setTimeout(() => {
+                                optionsArea.innerHTML = '<button class="option-btn" style="text-align:center; background:#3b82f6; color:white; font-weight:bold; width:100%;" onclick="window.location.href=\'listening.html\'">返回聽力大廳</button>';
+                                optionsArea.classList.remove('hidden');
+                                scrollToBottom();
+                            }, 1000);
+                        }, 800);
+                    }
+                } catch (error) {
+                    addBubble('system', '連線錯誤');
+                }
+            }, 1000);
+        }
+
+        window.onload = fetchTask;
+    </script>
+</body>
+</html>

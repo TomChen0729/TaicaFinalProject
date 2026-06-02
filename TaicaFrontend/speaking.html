@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>口說訓練大廳 - 實用英語生存指南</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body class="home-body">
+    
+    <nav class="top-navbar">
+        <div class="nav-left">
+            <a href="index.html" class="btn-back">⬅️ 返回首頁</a>
+            <div class="page-title">🗣️ 口說訓練大廳</div>
+        </div>
+        <div class="nav-right" id="navRightActions">
+            <span style="color: #94a3b8;">載入中...</span>
+        </div>
+    </nav>
+
+    <div class="home-container">
+        <div class="hero-header" style="margin-top: 20px;">
+            <h1>日常英語生存對話</h1>
+            <p>選擇一個生活情境，開始與 AI 進行實戰練習！</p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-badge badge-easy">🟢 入門</div>
+                <div class="emoji">🍔</div>
+                <div class="scenario-title">速食店點餐</div>
+                <div class="scenario-desc">任務：點一份辣味麥脆雞套餐與飲料</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-badge badge-easy">🟢 入門</div>
+                <div class="emoji">🛒</div>
+                <div class="scenario-title">超市結帳</div>
+                <div class="scenario-desc">任務：回答是否需要塑膠袋與支付方式</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-badge badge-medium">🟡 進階</div>
+                <div class="emoji">🗺️</div>
+                <div class="scenario-title">街頭問路</div>
+                <div class="scenario-desc">任務：向路人詢問最近的車站在哪裡</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-badge badge-medium">🟡 進階</div>
+                <div class="emoji">🛂</div>
+                <div class="scenario-title">海關入境</div>
+                <div class="scenario-desc">任務：向海關說明旅遊目的與停留天數</div>
+                <div class="action-buttons login-required-btns"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 使用 config.js 的全域變數，確保不同電腦 Port 號不衝突
+            const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:82/api';
+            const token = localStorage.getItem('auth_token');
+            const userName = localStorage.getItem('user_name');
+            
+            const navRightActions = document.getElementById('navRightActions');
+            const btnContainers = document.querySelectorAll('.login-required-btns');
+
+            if (token && userName) {
+                // [已登入狀態]
+                navRightActions.innerHTML = `
+                    <span style="color: #cbd5e1;">${userName} 同學 👋</span>
+                    <span style="color: #475569;">|</span>
+                    <a href="dashboard.html" class="nav-link">📊 學習後台</a>
+                    <button id="logoutBtn" class="btn-logout">登出</button>
+                `;
+
+                // 渲染各關卡按鈕
+                btnContainers.forEach(container => {
+                    let scenario = 'fast_food';
+                    if (container.closest('.card').querySelector('.scenario-title').textContent.includes('超市')) scenario = 'supermarket';
+                    if (container.closest('.card').querySelector('.scenario-title').textContent.includes('問路')) scenario = 'directions';
+                    if (container.closest('.card').querySelector('.scenario-title').textContent.includes('海關')) scenario = 'immigration';
+
+                    container.innerHTML = `
+                        <a href="chat.html?scenario=${scenario}" class="btn btn-primary">正式錄影版</a>
+                        <a href="test.html?scenario=${scenario}" class="btn btn-test">測試上傳版</a>
+                    `;
+                });
+
+                // 登出邏輯
+                document.getElementById('logoutBtn').addEventListener('click', async () => {
+                    try {
+                        await fetch(`${apiUrl}/logout`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json'
+                            }
+                        });
+                    } catch (e) {
+                        console.error('API 登出失敗，執行本機清除');
+                    } finally {
+                        localStorage.clear();
+                        alert('已安全登出！');
+                        window.location.href = 'index.html'; // 登出後退回大首頁
+                    }
+                });
+
+            } else {
+                // [未登入狀態]
+                navRightActions.innerHTML = `
+                    <span style="color: #94a3b8; font-size: 0.85rem;">🔒 訪客模式</span>
+                    <a href="auth/login.html" class="btn-login">登入 / 註冊</a>
+                `;
+
+                // 限制進入
+                btnContainers.forEach(container => {
+                    container.innerHTML = `<a href="auth/login.html" class="btn" style="background-color: #cbd5e1; color: #475569;">請先登入以解鎖關卡</a>`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

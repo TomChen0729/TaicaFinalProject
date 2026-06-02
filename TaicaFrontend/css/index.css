@@ -580,3 +580,207 @@ body {
 
 .user-bubble { background: #f8fafc; color: #475569; border-left: 4px solid #94a3b8; }
 .ai-bubble { background: #eff6ff; color: #1e40af; border-left: 4px solid #3b82f6; }
+
+/* ==========================================
+   共用頂部導覽列樣式 (Navbar)
+========================================== */
+.top-navbar {
+    background-color: #1e293b;
+    padding: 12px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.page-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.95rem;
+}
+
+.nav-link {
+    color: #e2e8f0;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: white;
+}
+
+.btn-logout {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.btn-logout:hover {
+    background: #dc2626;
+}
+
+.btn-login {
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.btn-login:hover {
+    background: #2563eb;
+}
+
+/* ==========================================
+   大首頁專屬樣式 (index.html)
+========================================== */
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.module-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid transparent;
+}
+
+.module-card:hover:not(.locked) {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    border-color: #3b82f6;
+}
+
+.module-icon { 
+    font-size: 4.5rem; 
+    margin-bottom: 20px; 
+}
+
+.module-title { 
+    font-size: 1.6rem; 
+    font-weight: bold; 
+    color: #1e293b; 
+    margin-bottom: 15px; 
+}
+
+.module-desc { 
+    color: #64748b; 
+    font-size: 1rem; 
+    line-height: 1.5; 
+    margin-bottom: 20px; 
+    flex-grow: 1; 
+}
+
+.locked {
+    opacity: 0.6;
+    filter: grayscale(80%);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-enter {
+    background: #3b82f6;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: bold;
+    width: 100%;
+    display: inline-block;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* 抽離行內樣式：開發中 badge 標籤 */
+.badge-dev {
+    background: #64748b;
+    color: white;
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    border-radius: 10px;
+    width: fit-content;
+    margin: 0 auto 10px auto;
+}
+
+/* 抽離行內樣式：敬請期待按鈕灰色樣式 */
+.btn-enter.btn-disabled {
+    background: #94a3b8;
+}
+
+/* 抽離行內樣式：訪客未登入時的按鈕灰色樣式 */
+.btn-enter.btn-guest {
+    background: #cbd5e1;
+    color: #475569;
+}
+
+/* ==========================================
+   聽力大廳專屬樣式 (listening.html)
+========================================== */
+.hero-header.lobby-header {
+    margin-top: 20px;
+}
+
+/* 抽離行內樣式：讓大廳進入按鈕水平置中且滿版 */
+.btn-enter-pacing {
+    width: 100%;
+    text-align: center;
+}
+
+/* 抽離行內樣式：未登入鎖定狀態的按鈕外觀 */
+.btn-lock-status {
+    background-color: #cbd5e1;
+    color: #475569;
+    width: 100%;
+    text-align: center;
+}

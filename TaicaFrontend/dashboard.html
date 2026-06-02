@@ -6,53 +6,78 @@
     <title>我的學習後台 - 實用英語生存指南</title>
     <link rel="stylesheet" href="css/index.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 頁籤專用美化樣式 */
+        .tab-group { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        .tab-btn { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; color: #475569; font-size: 0.95rem; transition: 0.2s; }
+        .tab-btn:hover { background: #e2e8f0; color: #1e293b; }
+        .tab-btn.active { background: #1e293b; color: white; border-color: #1e293b; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        /* 🔹 新增：分頁按鈕群組專用樣式 */
+        .pagination-group { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 25px; margin-bottom: 10px; }
+        .page-btn { background: white; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; color: #475569; transition: 0.2s; font-size: 0.9rem; }
+        .page-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #94a3b8; }
+        .page-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    </style>
 </head>
 <body class="dashboard-body">
     
-    <nav class="dash-navbar">
-        <div class="dash-nav-inner">
-            <div class="dash-logo">🎓 學習儀表板</div>
-            <div class="dash-links">
-                <a href="index.html" class="dash-btn-outline">回首頁繼續闖關</a>
-                <button id="logoutBtn" class="dash-btn-danger">登出</button>
-            </div>
+    <nav class="top-navbar">
+        <div class="nav-left">
+            <a href="index.html" class="btn-back">⬅️ 返回首頁</a>
+            <div class="page-title">🎓 學習儀表板後台</div>
+        </div>
+        <div class="nav-right">
+            <button id="logoutBtn" class="btn-logout">安全登出</button>
         </div>
     </nav>
 
     <div class="dash-container">
-        <header class="dash-header">
+        <header class="dash-header" style="margin-top: 20px;">
             <h1 id="userNameTitle">載入中...</h1>
             <p>持續練習，解鎖更多生存句型卡！</p>
         </header>
 
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-title">總對話次數</div><div class="stat-value" id="stat-total">0</div></div>
+            <div class="stat-card"><div class="stat-title">全方位總練習次數</div><div class="stat-value" id="stat-total">0</div></div>
             <div class="stat-card"><div class="stat-title">成功通關次數</div><div class="stat-value" id="stat-success" style="color: #10b981;">0</div></div>
-            <div class="stat-card"><div class="stat-title">通關率</div><div class="stat-value" id="stat-rate">0%</div></div>
+            <div class="stat-card"><div class="stat-title">綜合達成率</div><div class="stat-value" id="stat-rate">0%</div></div>
         </div>
 
         <section class="chart-section" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-            <h2 style="font-size: 1.2rem; color: #1e293b; margin-top:0; margin-bottom: 15px;">📈 近七日練習趨勢</h2>
+            <h2 style="font-size: 1.2rem; color: #1e293b; margin-top:0; margin-bottom: 15px;">📈 近七日全方位練習趨勢</h2>
             <canvas id="practiceChart" style="max-height: 250px;"></canvas>
         </section>
 
         <section class="cards-section" style="margin-bottom: 40px;">
-            <h2 style="font-size: 1.2rem; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">🏆 已收集知識卡</h2>
-            <div id="cardsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                </div>
+            <h2 style="font-size: 1.2rem; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px;">🏆 已收集知識卡 (口說專屬)</h2>
+            <div id="cardsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;"></div>
         </section>
 
         <section class="history-section">
-            <h2>📜 最近對話紀錄</h2>
-            <div id="historyList" class="history-list">
-                <div style="text-align: center; color: #64748b; padding: 20px;">資料載入中...</div>
+            <h2>📜 完整學習練習紀錄</h2>
+            
+            <div class="tab-group">
+                <button class="tab-btn active" data-module="all">✨ 全部顯示</button>
+                <button class="tab-btn" data-module="speak">🗣️ 口說對話</button>
+                <button class="tab-btn" data-module="listen">🎧 聽力實戰</button>
             </div>
+
+            <div id="historyList" class="history-list"></div>
+
+            <div id="paginationControls" class="pagination-group"></div>
         </section>
     </div>
 
     <script>
+        const apiUrl = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://127.0.0.1:82/api';
         const token = localStorage.getItem('auth_token');
         const userName = localStorage.getItem('user_name');
+
+        // 🔹 紀錄當前的分頁與類別狀態
+        let currentModuleType = 'all';
+        let currentPage = 1;
 
         if (!token) {
             alert('請先登入會員！');
@@ -61,117 +86,105 @@
 
         document.getElementById('userNameTitle').textContent = `Hello, ${userName} 同學！`;
 
+        // 1. 獲取大廳基礎指標與圖表
         async function fetchDashboardData() {
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/dashboard', {
+                const response = await fetch(`${apiUrl}/dashboard`, {
                     method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 });
-
-                if (response.status === 401) {
-                    alert('登入已過期');
-                    localStorage.clear();
-                    window.location.href = 'auth/login.html';
-                    return;
-                }
-
                 const data = await response.json();
                 
-                // 渲染基礎指標
                 document.getElementById('stat-total').textContent = data.total_conversations;
                 document.getElementById('stat-success').textContent = data.success_count;
                 const rate = data.total_conversations > 0 ? Math.round((data.success_count / data.total_conversations) * 100) : 0;
                 document.getElementById('stat-rate').textContent = `${rate}%`;
 
-                // 呼叫圖表繪製
-                renderChart(data.chart_labels, data.chart_values);
-
-                // 呼叫知識卡渲染
+                renderChart(data.chart_labels, data.chart_speak_values, data.chart_listen_values);
                 renderKnowledgeCards(data.unlocked_cards);
-
-                // 呼叫歷史對話紀錄渲染
-                renderHistory(data.recent_history);
-
             } catch (error) {
                 console.error(error);
-                document.getElementById('historyList').innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px;">數據加載失敗</div>`;
             }
         }
 
-        // 繪製 Chart.js 圖表
-        function renderChart(labels, values) {
-            const ctx = document.getElementById('practiceChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '每日口說對話次數',
-                        data: values,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
-            });
+        // 2. 🔹 新增：動態向獨立 API 索取特定頁碼與類別的歷史紀錄
+        async function fetchHistoryPage(page, moduleType) {
+            const listContainer = document.getElementById('historyList');
+            listContainer.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">紀錄讀取中...</div>';
+            
+            try {
+                const response = await fetch(`${apiUrl}/learning-history?page=${page}&module_type=${moduleType}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                });
+                const paginatedResult = await response.json();
+                
+                // 更新全域狀態
+                currentPage = paginatedResult.current_page;
+                
+                renderHistory(paginatedResult.data);
+                renderPaginationButtons(paginatorData = {
+                    current_page: paginatedResult.current_page,
+                    last_page: paginatedResult.last_page
+                });
+            } catch (error) {
+                listContainer.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px;">紀錄載入失敗</div>';
+            }
         }
 
-        // 渲染遊戲化知識卡
-        function renderKnowledgeCards(cards) {
-            const grid = document.getElementById('cardsGrid');
-            grid.innerHTML = '';
+        // 3. 🔹 新增：渲染分頁按鈕組
+        function renderPaginationButtons(pagination) {
+            const controls = document.getElementById('paginationControls');
+            controls.innerHTML = '';
 
-            cards.forEach(card => {
-                const cardHtml = `
-                    <div style="background: ${card.is_unlocked ? '#ffffff' : '#f8fafc'}; 
-                                border: 2px solid ${card.is_unlocked ? '#ef4444' : '#e2e8f0'}; 
-                                padding: 20px; border-radius: 12px; opacity: ${card.is_unlocked ? '1' : '0.6'};
-                                position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                        <span style="font-size: 0.8rem; font-weight: bold; color: ${card.is_unlocked ? '#ef4444' : '#94a3b8'};">${card.bonus}</span>
-                        <h3 style="margin: 5px 0 10px 0; font-size: 1.1rem; color: #0f172a;">${card.title}</h3>
-                        <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #ef4444; margin-bottom: 10px;">
-                            ${card.phrase}
-                        </div>
-                        <p style="font-size: 0.85rem; color: #475569; margin: 0; line-height: 1.5;">${card.description}</p>
-                    </div>
-                `;
-                grid.insertAdjacentHTML('beforeend', cardHtml);
-            });
+            if (pagination.last_page <= 1) return; // 如果只有一頁就不顯示分頁鈕
+
+            // 上一頁按鈕
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '上一頁';
+            prevBtn.disabled = (pagination.current_page === 1);
+            prevBtn.onclick = () => fetchHistoryPage(pagination.current_page - 1, currentModuleType);
+            controls.appendChild(prevBtn);
+
+            // 頁碼按鈕
+            for (let i = 1; i <= pagination.last_page; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${pagination.current_page === i ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => fetchHistoryPage(i, currentModuleType);
+                controls.appendChild(pageBtn);
+            }
+
+            // 下一頁按鈕
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = '下一頁';
+            nextBtn.disabled = (pagination.current_page === pagination.last_page);
+            nextBtn.onclick = () => fetchHistoryPage(pagination.current_page + 1, currentModuleType);
+            controls.appendChild(nextBtn);
         }
 
-        // 渲染歷史對話紀錄
+        // 渲染對話紀錄列表
         function renderHistory(history) {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
 
-            if (history.length === 0) {
-                list.innerHTML = '<div style="text-align: center; color: #64748b; padding: 20px;">目前尚無練習紀錄。</div>';
+            if (!history || history.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #64748b; padding: 30px; background: white; border-radius: 8px; border: 1px dashed #cbd5e1;">目前暫無該類別的練習紀錄。</div>';
                 return;
             }
 
             history.forEach(item => {
                 const badgeClass = item.is_success ? 'badge-success' : 'badge-fail';
                 const badgeText = item.is_success ? '通關成功' : '未達成任務';
-                
-                // ★ 新增：如果有建議，就產生一個提示氣泡
-                let suggestionHtml = '';
-                if (item.suggestion) {
-                    suggestionHtml = `
-                        <div style="background: #fffbeb; color: #d97706; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 0.9rem;">
-                            <strong>💡 導師建議：</strong>${item.suggestion}
-                        </div>
-                    `;
-                }
+                const isListen = (item.module_type === 'listen');
+
+                let suggestionHtml = item.suggestion ? `
+                    <div style="background: #fffbeb; color: #d97706; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 0.9rem;">
+                        <strong>💡 導師建議：</strong>${item.suggestion}
+                    </div>
+                ` : '';
 
                 const html = `
                     <div class="history-item">
@@ -180,21 +193,62 @@
                             <div><span class="badge ${badgeClass}">${badgeText}</span><span style="font-size: 0.8rem; color: #94a3b8; margin-left:10px;">${item.date}</span></div>
                         </div>
                         <div class="history-chat">
-                            <div class="user-bubble">🗣️ 你說：${item.user_text}</div>
-                            <div class="ai-bubble">🤖 AI 回：${item.ai_reply}</div>
-                            ${suggestionHtml} </div>
+                            <div class="user-bubble">${isListen ? '🎧 您的選擇' : '🗣️ 你說'}：${item.user_text}</div>
+                            <div class="ai-bubble">${isListen ? '📝 正確解答' : '🤖 AI 回'}：${item.ai_reply}</div>
+                            ${suggestionHtml}
+                        </div>
                     </div>
                 `;
                 list.insertAdjacentHTML('beforeend', html);
             });
         }
-        
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.clear();
-            window.location.href = 'index.html';
+
+        // 監聽頁籤點擊事件
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // 切換狀態並重置回第一頁
+                currentModuleType = e.target.getAttribute('data-module');
+                fetchHistoryPage(1, currentModuleType);
+            });
         });
 
+        function renderChart(labels, speakValues, listenValues) {
+            const ctx = document.getElementById('practiceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '🗣️ 口說練習次數', data: speakValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', borderWidth: 3, fill: true, tension: 0.3 },
+                        { label: '🎧 聽力練習次數', data: listenValues, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.05)', borderWidth: 3, fill: true, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+            });
+        }
+
+        function renderKnowledgeCards(cards) {
+            const grid = document.getElementById('cardsGrid'); grid.innerHTML = '';
+            cards.forEach(card => {
+                grid.insertAdjacentHTML('beforeend', `
+                    <div style="background: ${card.is_unlocked ? '#ffffff' : '#f8fafc'}; border: 2px solid ${card.is_unlocked ? '#ef4444' : '#e2e8f0'}; padding: 20px; border-radius: 12px; opacity: ${card.is_unlocked ? '1' : '0.6'}; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                        <span style="font-size: 0.8rem; font-weight: bold; color: ${card.is_unlocked ? '#ef4444' : '#94a3b8'};">${card.bonus}</span>
+                        <h3 style="margin: 5px 0 10px 0; font-size: 1.1rem; color: #0f172a;">${card.title}</h3>
+                        <div style="background: #f1f5f9; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-weight: bold; color: #ef4444; margin-bottom: 10px;">${card.phrase}</div>
+                        <p style="font-size: 0.85rem; color: #475569; margin: 0; line-height: 1.5;">${card.description}</p>
+                    </div>
+                `);
+            });
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
+
+        // 初始化載入
         fetchDashboardData();
+        fetchHistoryPage(1, 'all'); // 預設載入第一頁全部紀錄
     </script>
 </body>
 </html>

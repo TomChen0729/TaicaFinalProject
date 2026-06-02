@@ -17,6 +17,7 @@ class Conversation extends Model
         'ai_reply',
         'is_success',
         'suggestion',
+        'module_type',
     ];
 
     /**
