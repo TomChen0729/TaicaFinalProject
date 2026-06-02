@@ -4,33 +4,47 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\DashboardService;
+use Exception;
 class DashboardController extends Controller
 {
     //
     protected DashboardService $dashboardService;
 
-    // 依賴注入 DashboardService
     public function __construct(DashboardService $dashboardService)
     {
         $this->dashboardService = $dashboardService;
     }
+
     /**
-     * 取得儀表板資料的 API 端點
+     * 取得儀表板基礎統計資料
      */
     public function getDashboard(Request $request)
     {
         try {
-            // 從 Token 中取得目前登入的使用者實例
+            $user = $request->user();
+            $data = $this->dashboardService->getUserDashboardData($user);
+            return response()->json($data, 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => '無法取得儀表板資料', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 🔹 新增：取得分頁與分類的完整學習紀錄
+     */
+    public function getLearningHistory(Request $request)
+    {
+        try {
             $user = $request->user();
 
-            // 呼叫 Service 取得統計數據
-            $data = $this->dashboardService->getUserDashboardData($user);
+            // 接收前端篩選參數，預設為每頁 5 筆，類別為全部 (all)
+            $moduleType = $request->query('module_type', 'all');
+            $perPage = 5;
 
-            // 回傳 200 與 JSON 格式資料
-            return response()->json($data, 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['message' => '無法取得儀表板資料', 'error' => $e->getMessage()], 500);
+            $history = $this->dashboardService->getPaginatedHistory($user, $perPage, $moduleType);
+            return response()->json($history, 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => '無法取得學習紀錄', 'error' => $e->getMessage()], 500);
         }
     }
 }

@@ -4,88 +4,118 @@ namespace App\Services;
 
 use App\Models\Conversation;
 use App\Models\User;
-use App\Models\Scenario;
 use Carbon\Carbon;
 
 class DashboardService
 {
     /**
-     * 取得使用者的儀表板完整統計數據（含圖表與知識卡）
+     * 取得使用者的儀表板統計數據（不含歷史紀錄，維持極速載入）
      */
     public function getUserDashboardData(User $user): array
     {
-        // 1. 撈出該使用者的所有對話紀錄
-        $conversations = Conversation::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // 撈出該使用者的所有對話紀錄以計算基本指標
+        $conversations = Conversation::where('user_id', $user->id)->get();
 
         $totalConversations = $conversations->count();
         $successCount = $conversations->where('is_success', true)->count();
 
-        // 2. 產出近七日圖表數據 (統計最近 7 天，每天的練習次數)
+        // 產出近七日分模組圖表數據
         $chartData = $this->getWeeklyChartData($user->id);
-
-        // 3. 獲取遊戲化知識卡狀態 (根據通過的情境，解鎖對應的核心句型卡)
-        $unlockedCards = $this->getUnlockedKnowledgeCards($user->id);
-
-        // 4. 整理最近的歷史紀錄 (取最新 5 筆即可，保持畫面精簡)
-        $recentHistory = $conversations->take(5)->map(function ($conv) {
-            return [
-                'scenario' => $this->formatScenarioName($conv->scenario_id),
-                'user_text' => $conv->user_text,
-                'ai_reply' => $conv->ai_reply,
-                'suggestion' => $conv->suggestion, // 🔹 修正：將資料庫的導師建議欄位封裝進回傳陣列
-                'is_success' => (bool) $conv->is_success,
-                'date' => $conv->created_at->format('Y-m-d H:i')
-            ];
-        })->values()->toArray();
 
         return [
             'total_conversations' => $totalConversations,
             'success_count' => $successCount,
             'chart_labels' => $chartData['labels'],
-            'chart_values' => $chartData['values'],
-            'unlocked_cards' => $unlockedCards,
-            'recent_history' => $recentHistory,
+            'chart_speak_values' => $chartData['speak_values'],   // 拆分口說數據
+            'chart_listen_values' => $chartData['listen_values'], // 拆分聽力數據
+            'unlocked_cards' => $this->getUnlockedKnowledgeCards($user->id),
         ];
     }
 
     /**
-     * 建立近七日練習量統計
+     * 核心新增：動態資料庫分頁與篩選機制
+     */
+    public function getPaginatedHistory(User $user, int $perPage, string $moduleType): array
+    {
+        $query = Conversation::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        // 如果有指定特定學習類別，則加入篩選條件
+        if ($moduleType !== 'all') {
+            $query->where('module_type', $moduleType);
+        }
+
+        // 呼叫 Laravel 內建分頁器
+        $paginator = $query->paginate($perPage);
+
+        // 格式化當前分頁頁面的資料內容
+        $formattedData = collect($paginator->items())->map(function ($conv) {
+            return [
+                'scenario' => $this->formatScenarioName($conv->scenario_id, $conv->module_type ?? 'speak'),
+                'module_type' => $conv->module_type ?? 'speak',
+                'user_text' => $conv->user_text,
+                'ai_reply' => $conv->ai_reply,
+                'suggestion' => $conv->suggestion,
+                'is_success' => (bool) $conv->is_success,
+                'date' => $conv->created_at->format('Y-m-d H:i')
+            ];
+        })->toArray();
+
+        // 包裝成符合前端非同步調用的標準分頁 JSON 結構
+        return [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'total' => $paginator->total(),
+            'data' => $formattedData
+        ];
+    }
+
+    /**
+     * 建立近七日分流練習量統計
      */
     private function getWeeklyChartData(int $userId): array
     {
         $labels = [];
-        $values = [];
+        $speakValues = [];
+        $listenValues = [];
 
-        // 迴圈跑過去 7 天
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $labels[] = $date->format('m/d');
 
-            // 統計該使用者在該日期的對話次數
-            $count = Conversation::where('user_id', $userId)
+            // 統計該日「口說」練習次數
+            $speakCount = Conversation::where('user_id', $userId)
+                ->where('module_type', 'speak')
                 ->whereDate('created_at', $date->toDateString())
                 ->count();
-            $values[] = $count;
+            $speakValues[] = $speakCount;
+
+            // 統計該日「聽力」練習次數
+            $listenCount = Conversation::where('user_id', $userId)
+                ->where('module_type', 'listen')
+                ->whereDate('created_at', $date->toDateString())
+                ->count();
+            $listenValues[] = $listenCount;
         }
 
-        return ['labels' => $labels, 'values' => $values];
+        return [
+            'labels' => $labels,
+            'speak_values' => $speakValues,
+            'listen_values' => $listenValues
+        ];
     }
 
     /**
-     * 依據通關成功紀錄，動態解鎖實用英語知識卡
+     * 獲取遊戲化知識卡狀態
      */
     private function getUnlockedKnowledgeCards(int $userId): array
     {
-        // 找出此會員所有成功通關的情境 ID (不重複)
         $clearedScenarios = Conversation::where('user_id', $userId)
             ->where('is_success', true)
             ->pluck('scenario_id')
             ->unique()
             ->toArray();
 
-        // 預設全系統的知識卡資料庫庫存
         $allCards = [
             'fast_food' => [
                 'title' => '🍟 速食店點餐達人',
@@ -109,7 +139,6 @@ class DashboardService
 
         $result = [];
         foreach ($allCards as $key => $card) {
-            // 判定是否通關，未通關則進行遮蔽隱藏
             $isUnlocked = in_array($key, $clearedScenarios);
             $result[] = [
                 'title' => $card['title'],
@@ -123,14 +152,27 @@ class DashboardService
         return $result;
     }
 
-    private function formatScenarioName(string $scenarioId): string
+    /**
+     * 智慧情境名稱對照處理
+     */
+    private function formatScenarioName(string $scenarioId, string $moduleType = 'speak'): string
     {
-        $names = [
-            'fast_food' => '🍔 速食店點餐',
-            'supermarket' => '🛒 超市結帳',
-            'directions' => '🗺️ 街頭問路',
-            'immigration' => '🛂 海關入境'
+        $speakNames = [
+            'fast_food' => '🍔 口說：速食店點餐',
+            'supermarket' => '🛒 口說：超市結帳',
+            'directions' => '🗺️ 口說：街頭問路',
+            'immigration' => '🛂 口說：海關入境'
         ];
-        return $names[$scenarioId] ?? $scenarioId;
+
+        $listenNames = [
+            'fast_food_pickup' => '🍔 聽力：速食店取餐廣播',
+            'train_station' => '🚆 聽力：車站月台廣播'
+        ];
+
+        if (array_key_exists($scenarioId, $listenNames)) {
+            return $listenNames[$scenarioId];
+        }
+
+        return $speakNames[$scenarioId] ?? $scenarioId;
     }
 }

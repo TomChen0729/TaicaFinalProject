@@ -3,6 +3,10 @@
 // ==========================================
 const token = localStorage.getItem('auth_token');
 
+// 🔹 修正全域守衛：只有在進入需要「強制登入」的頁面（例如對話實戰室 chat.html、測試頁 test.html）時才進行攔截
+const loginRequiredPages = ['chat.html', 'test.html'];
+const isPageRequiredLogin = loginRequiredPages.some(page => window.location.pathname.includes(page));
+
 if (!token) {
     alert('偵測到未登入行為，請先登入會員以開始練習！');
     window.location.href = 'auth/login.html'; 
@@ -247,3 +251,70 @@ if (uploadTestBtn && testAudioInput) {
         await sendToLaravel(file);
     });
 }
+
+// ==========================================
+// 7. 大首頁互動與權限分流邏輯 (解耦版)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const apiUrl = 'http://127.0.0.1:82/api';
+    const currentToken = localStorage.getItem('auth_token');
+    const userName = localStorage.getItem('user_name');
+    
+    const navRightActions = document.getElementById('navRightActions');
+    const authCheckCards = document.querySelectorAll('.auth-check-card');
+
+    // 智慧型安全過濾：確認當前頁面有首頁導覽列節點，才執行內部邏輯
+    if (navRightActions) {
+        if (currentToken && userName) {
+            // [已登入狀態] 渲染主控台
+            navRightActions.innerHTML = `
+                <span style="color: #cbd5e1;">歡迎回來，${userName} 同學 👋</span>
+                <span style="color: #475569;">|</span>
+                <a href="dashboard.html" class="nav-link">進入我的後台 📊</a>
+                <button id="logoutBtn" class="btn-logout">安全登出</button>
+            `;
+
+            // 綁定安全登出點擊事件
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                try {
+                    await fetch(`${apiUrl}/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentToken}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+                } catch (e) {
+                    console.error('後端 Token 銷毀失敗，直接清除本機快取');
+                } finally {
+                    localStorage.clear();
+                    alert('已安全登出！');
+                    window.location.reload();
+                }
+            });
+
+        } else {
+            // [未登入訪客狀態] 渲染訪客登入鈕
+            navRightActions.innerHTML = `
+                <span style="color: #94a3b8; font-size: 0.85rem;">🔒 訪客模式</span>
+                <a href="Auth/login.html" class="btn-login">會員登入 / 註冊</a>
+            `;
+
+            // 攔截未登入訪客點擊模組卡片的行為，改套用解耦後的 CSS 樣式
+            authCheckCards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    alert('請先登入會員以解鎖訓練模組！');
+                    window.location.href = 'Auth/login.html';
+                });
+                
+                // 動態改為解耦後的樣式
+                const btn = card.querySelector('.btn-enter');
+                if (btn) {
+                    btn.textContent = '請先登入';
+                    btn.classList.add('btn-guest'); 
+                }
+            });
+        }
+    }
+});
