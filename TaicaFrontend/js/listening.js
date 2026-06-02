@@ -3,7 +3,7 @@
  */
 document.addEventListener('DOMContentLoaded', () => {
     // 獨立維護後端 API 網址
-    const apiUrl = 'http://127.0.0.1:82/api';
+    const apiUrl = 'http://127.0.0.1:8000/api';
     const token = localStorage.getItem('auth_token');
     const userName = localStorage.getItem('user_name');
     

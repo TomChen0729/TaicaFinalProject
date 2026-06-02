@@ -784,3 +784,20 @@ body {
     width: 100%;
     text-align: center;
 }
+
+/* ==========================================
+   口說發音與表達糾正提示框 (解耦專屬樣式)
+========================================== */
+.message.user .pronunciation-tip {
+    background-color: rgba(255, 255, 255, 0.95); /* 白色半透明底襯托 */
+    color: #b45309;                               /* 深琥珀色文字，柔和不刺眼 */
+    border-left: 4px solid #f59e0b;               /* 左側黃色警告條 */
+    padding: 8px 12px;
+    margin-top: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    text-align: left;                             /* 確保提示靠左對齊方便閱讀 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    word-break: break-all;
+}

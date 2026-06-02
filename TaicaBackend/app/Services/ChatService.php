@@ -8,10 +8,11 @@ use App\Models\Scenario;
 use App\Models\Conversation;
 use App\Models\User;
 use Exception;
+
 class ChatService
 {
     /**
-     * 處理語音指令的完整主流程（已升級：支援會員識別、全參數化資料庫管理與道地建議解析）
+     * 處理語音指令的完整主流程（已升級：支援發音與表達糾正功能）
      */
     public function processVoiceCommand(User $user, UploadedFile $audioFile, string $scenarioId): array
     {
@@ -24,6 +25,7 @@ class ChatService
                 'user_text' => '(聽不清楚)',
                 'ai_reply' => 'I could not hear clearly. Could you repeat that?',
                 'suggestion' => '請試著靠近麥克風再說一次。',
+                'pronunciation_fix' => '', // 保持防呆結構一致
                 'is_success' => false
             ];
         }
@@ -38,6 +40,9 @@ class ChatService
         $aiReply = $llmResult['ai_reply'] ?? 'Got it. Let us continue.';
         $isSuccess = $llmResult['is_success'] ?? false;
         $suggestion = $llmResult['suggestion'] ?? null;
+        
+        // 🚀 核心新增：精準接住地端 LLM 依據全新 System Prompt 吐出的糾正欄位
+        $pronunciationFix = $llmResult['pronunciation_fix'] ?? ''; 
 
         // 5. 執行核心資料庫記錄，將對話、建議及通關結果綁定該會員帳號
         Conversation::create([
@@ -46,15 +51,21 @@ class ChatService
             'user_text' => $userText,
             'ai_reply' => $aiReply,
             'suggestion' => $suggestion, // 寫入導師建議
-            'is_success' => $isSuccess
+            'is_success' => $isSuccess,
+            
+            // ⚠️ 欄位安全提醒：
+            // 如果您的 conversations 資料表尚未執行過 Migration 新增 'pronunciation_fix' 欄位，
+            // 請先維持下方這行的註解狀態（直接略過不儲存），這樣才不會引發 SQL Unknown Column 報錯。
+            // 'pronunciation_fix' => $pronunciationFix 
         ]);
 
-        // 6. 回傳最終結構給 Controller / 前端
+        // 6. 回傳最終結構給 Controller / 前端 (完成前後端資料流解耦對接)
         return [
             'user_text' => $userText,
             'ai_reply' => $aiReply,
-            'suggestion' => $suggestion, // 建議也回傳給前端，方便在畫面上顯示導師回饋
-            'is_success' => $isSuccess
+            'suggestion' => $suggestion, 
+            'is_success' => $isSuccess,
+            'pronunciation_fix' => $pronunciationFix // 🚀 核心新增：回傳給前端 index.js 進行動態嵌入
         ];
     }
 
@@ -87,7 +98,6 @@ class ChatService
      */
     private function generateReply(string $userText, string $systemPrompt): array
     {
-        // 移除容易解析失敗的自訂標籤，改為明確要求純 JSON 輸出
         $fullPrompt = "{$systemPrompt}\n\n"
                     . "Student says: \"{$userText}\"\n\n"
                     . "Please strictly output your evaluation in JSON format.";
@@ -95,11 +105,11 @@ class ChatService
         $response = Http::timeout(120)->post('http://127.0.0.1:11434/api/generate', [
             'model' => 'qwen2.5:7b',
             'prompt' => $fullPrompt,
-            'format' => 'json', // 🚀 關鍵改動：強制 Ollama 回傳 JSON 結構
+            'format' => 'json', // 強制 Ollama 回傳 JSON 結構
             'stream' => false,
             'options' => [
-                'temperature' => 0.2, // 🚀 降低溫度，確保評分標準一致與格式穩定
-                'num_ctx' => 2048     // 🚀 限制上下文長度，保護 6GB VRAM 不溢出
+                'temperature' => 0.2, // 降低溫度，確保評分標準一致與格式穩定
+                'num_ctx' => 2048     // 限制上下文長度，保護 VRAM 不溢出
             ]
         ]);
 
@@ -109,7 +119,7 @@ class ChatService
 
         $responseText = trim($response->json('response'));
         
-        // 將 LLM 回傳的 JSON 字串直接轉為 PHP 陣列，方便後續邏輯操作
+        // 將 LLM 回傳的 JSON 字串直接轉為 PHP 陣列
         $result = json_decode($responseText, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
