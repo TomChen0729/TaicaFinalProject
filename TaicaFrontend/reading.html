@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 閱讀學習 | TAICA</title>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 您提供的 Grid 與 Card CSS 應該放在 css/index.css 中，
+           若沒有，可以直接貼在這裡 */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: 25px;
+            width: 80%; /* 稍微放寬，讓閱讀標題有空間 */
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .card {
+            background: white;
+            padding: 30px 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+            position: relative;
+            box-sizing: border-box;
+            cursor: pointer; /* 加上指標游標，提示整張卡片可點擊 */
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: #4f46e5; /* 閱讀模組改用 Indigo 紫藍色邊框 */
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .badge-reading {
+            background-color: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .emoji {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .scenario-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .scenario-desc {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin-bottom: 25px;
+            flex-grow: 1; 
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="home-body bg-gray-50">
+    
+    <nav class="top-navbar">
+        <div class="nav-left">
+            <a href="index.html" class="btn-back">⬅️ 返回首頁</a>
+            <div class="page-title">📖 閱讀訓練大廳</div>
+        </div>
+        <div class="nav-right" id="navRightActions">
+            <span>載入中...</span>
+        </div>
+    </nav>
+    <div class="home-container">
+
+        <div class="hero-header lobby-header">
+                <h1>閱讀實戰練習</h1>
+                <p>選擇一篇文章，看能不能理解並完成測驗！</p>
+        </div>
+        <div class="max-w-5xl mx-auto space-y-6 mt-8 ">
+
+            <div id="article-list-section">
+            
+                <div id="article-container" class="grid">
+                    </div>
+            </div>
+
+            <div id="reading-section" class="hidden bg-white p-8 rounded-lg shadow-lg max-w-3xl mx-auto">
+                <button onclick="location.reload()" class="text-sm text-gray-500 hover:text-indigo-600 mb-6 font-bold">← 返回文章列表</button>
+                
+                <h2 id="article-title" class="text-2xl font-bold mb-4 text-gray-900"></h2>
+                <p id="article-content" class="text-gray-700 leading-relaxed mb-6 text-lg"></p>
+                
+                <details class="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-6 rounded group cursor-pointer">
+                    <summary class="font-bold text-indigo-800 outline-none flex justify-between items-center">
+                        <span>✨ AI 重點整理 (點擊展開)</span>
+                        <span id="summary-status" class="text-sm font-normal text-indigo-600 animate-pulse">AI 思考中 ⏳</span>
+                    </summary>
+                    <div id="ai-summary" class="mt-4 text-indigo-900 whitespace-pre-wrap border-t border-indigo-200 pt-3">
+                    </div>
+                </details>
+
+                <button id="btn-show-quiz" disabled class="w-full bg-gray-400 text-white font-bold py-3 px-4 rounded cursor-not-allowed transition duration-300">
+                    AI 正在為您客製化出題中... ⏳
+                </button>
+            </div>
+
+            <div id="quiz-section" class="hidden bg-white p-8 rounded-lg shadow-lg max-w-3xl mx-auto">
+                <h2 class="text-xl font-semibold mb-4">閱讀測驗</h2>
+                <div id="quiz-container" class="space-y-6"></div>
+                <button id="btn-submit-quiz" class="mt-6 w-full bg-green-600 text-white font-bold py-3 px-4 rounded hover:bg-green-700 transition">
+                    繳交並對答案
+                </button>
+            </div>
+
+            <div id="loading-spinner" class="hidden text-center py-10">
+                <div class="animate-spin inline-block w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full mb-2"></div>
+                <p class="text-gray-600 font-medium">AI 思考中，請稍候...</p>
+            </div>
+        </div>
+    </div>
+    <script src="js/reading.js"></script>
+</body>
+</html>

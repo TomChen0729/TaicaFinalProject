@@ -103,7 +103,7 @@ class ChatService
                     . "Please strictly output your evaluation in JSON format.";
 
         $response = Http::timeout(120)->post('http://127.0.0.1:11434/api/generate', [
-            'model' => 'qwen2.5:7b',
+            'model' => 'llama3.1:8b',
             'prompt' => $fullPrompt,
             'format' => 'json', // 強制 Ollama 回傳 JSON 結構
             'stream' => false,

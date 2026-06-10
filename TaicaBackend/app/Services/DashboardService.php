@@ -29,6 +29,8 @@ class DashboardService
             'chart_speak_values' => $chartData['speak_values'],   // 拆分口說數據
             'chart_listen_values' => $chartData['listen_values'], // 拆分聽力數據
             'unlocked_cards' => $this->getUnlockedKnowledgeCards($user->id),
+            'chart_read_values' => $chartData['read_values'],
+            'chart_write_values' => $chartData['write_values'],
         ];
     }
 
@@ -78,6 +80,8 @@ class DashboardService
         $labels = [];
         $speakValues = [];
         $listenValues = [];
+        $readValues = []; // 🌟 新增閱讀陣列
+        $writeValues = [];
 
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
@@ -96,12 +100,22 @@ class DashboardService
                 ->whereDate('created_at', $date->toDateString())
                 ->count();
             $listenValues[] = $listenCount;
+
+            $readValues[] = Conversation::where('user_id', $userId)
+                ->where('module_type', 'read')
+                ->whereDate('created_at', $date
+                ->toDateString())
+                ->count();
+
+            $writeValues[] = Conversation::where('user_id', $userId)->where('module_type', 'write')->whereDate('created_at', $date->toDateString())->count();
         }
 
         return [
             'labels' => $labels,
             'speak_values' => $speakValues,
-            'listen_values' => $listenValues
+            'listen_values' => $listenValues,
+            'read_values' => $readValues,
+            'write_values' => $writeValues
         ];
     }
 
@@ -169,10 +183,24 @@ class DashboardService
             'train_station' => '🚆 聽力：車站月台廣播'
         ];
 
+        $writeNames = [
+            'restaurant' => '🍽️ 寫作：智慧餐廳',
+            'zoo' => '🦒 寫作：現代動物園',
+            'airport' => '✈️ 寫作：未來機場'
+        ];
+
+        if ($moduleType === 'write') {
+            return $writeNames[$scenarioId] ?? '✍️ 寫作：' . $scenarioId;
+        }
+
         if (array_key_exists($scenarioId, $listenNames)) {
             return $listenNames[$scenarioId];
         }
 
+        if ($moduleType === 'read') {
+            return '📖 Q：' . $scenarioId;
+        }
+        
         return $speakNames[$scenarioId] ?? $scenarioId;
     }
 }

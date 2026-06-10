@@ -42,6 +42,7 @@ body {
     flex-direction: column;
     height: 80vh;
     overflow: hidden;
+    margin: 20px auto;
 }
 
 .chat-header {
@@ -143,7 +144,7 @@ body {
 
 .home-container {
     width: 100%;
-    max-width: 900px;
+    max-width: 2000px;
     margin: 0 auto;
     padding: 40px 20px;
     box-sizing: border-box;
@@ -171,6 +172,8 @@ body {
     display: grid;
     grid-template-columns: 1fr; 
     gap: 25px;
+    width: 60%;
+    margin: 0 auto;
 }
 
 @media (min-width: 768px) {
@@ -586,10 +589,21 @@ body {
 ========================================== */
 .top-navbar {
     background-color: #1e293b;
-    padding: 12px 25px;
+    /* 1. 改為左右 padding，移除上下 padding */
+    padding: 0 25px; 
+    
+    /* 2. 給予一個明確的固定高度 (例如 65px，您可以依照喜好微調) */
+    height: 65px; 
+    
+    /* 3. 確保 padding 包含在高度計算內 */
+    box-sizing: border-box; 
+    
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    
+    /* align-items: center 會自動幫您把內容完美垂直置中，不需要靠上下 padding */
+    align-items: center; 
+    
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     color: white;
     position: sticky;
@@ -633,6 +647,10 @@ body {
     font-size: 0.95rem;
 }
 
+.nav-left, .nav-right {
+    /* 確保兩邊區塊在必要時可以縮放，但不會破壞對齊 */
+    flex-shrink: 0; 
+}
 .nav-link {
     color: #e2e8f0;
     text-decoration: none;
@@ -652,6 +670,7 @@ body {
     cursor: pointer;
     font-weight: bold;
     transition: 0.2s;
+    font-size: 0.9rem;
 }
 
 .btn-logout:hover {
@@ -677,9 +696,9 @@ body {
 ========================================== */
 .module-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 25px;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }

@@ -62,6 +62,8 @@
                 <button class="tab-btn active" data-module="all">✨ 全部顯示</button>
                 <button class="tab-btn" data-module="speak">🗣️ 口說對話</button>
                 <button class="tab-btn" data-module="listen">🎧 聽力實戰</button>
+                <button class="tab-btn" data-module="read">📖 閱讀測驗</button>
+                <button class="tab-btn" data-module="write">✍️ 寫作練習</button>
             </div>
 
             <div id="historyList" class="history-list"></div>
@@ -100,7 +102,7 @@
                 const rate = data.total_conversations > 0 ? Math.round((data.success_count / data.total_conversations) * 100) : 0;
                 document.getElementById('stat-rate').textContent = `${rate}%`;
 
-                renderChart(data.chart_labels, data.chart_speak_values, data.chart_listen_values);
+                renderChart(data.chart_labels, data.chart_speak_values, data.chart_listen_values, data.chart_read_values, data.chart_write_values);
                 renderKnowledgeCards(data.unlocked_cards);
             } catch (error) {
                 console.error(error);
@@ -179,10 +181,36 @@
                 const badgeClass = item.is_success ? 'badge-success' : 'badge-fail';
                 const badgeText = item.is_success ? '通關成功' : '未達成任務';
                 const isListen = (item.module_type === 'listen');
+                const isRead = (item.module_type === 'read'); // 🌟 判斷是否為閱讀
+                const isWrite = (item.module_type === 'write');
 
-                let suggestionHtml = item.suggestion ? `
+                // 判斷不同的 Icon 顯示
+                let userLabel = '🗣️ 你說';
+                let aiLabel = '🤖 AI 回';
+                let suggestionLabel = '💡 導師建議：'; // 預設標題
+                
+                if (isListen) { userLabel = '🎧 您的選擇'; aiLabel = '📝 正確解答'; }
+                if (isRead) { 
+                    userLabel = '🎯 您的選擇'; 
+                    aiLabel = '✨ 正確答案'; 
+                    suggestionLabel = '💡 導師詳解：'; // 🌟 閱讀測驗專屬標題
+                }
+
+                if (isWrite) { 
+                    userLabel = '✍️ 您的作文'; 
+                    aiLabel = '📊 AI 綜合評分'; 
+                    suggestionLabel = '✨ 詳細回饋與潤飾：'; 
+                }
+
+                let cleanSuggestion = item.suggestion;
+                if (isRead && cleanSuggestion) {
+                    // 利用正規表達式，如果字串開頭是「詳解：」或「解析：」，就把它替換成空白
+                    cleanSuggestion = cleanSuggestion.replace(/^(詳解：|解析：|說明：)/, '').trim();
+                }
+
+                let suggestionHtml = cleanSuggestion ? `
                     <div style="background: #fffbeb; color: #d97706; border-left: 4px solid #f59e0b; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 0.9rem;">
-                        <strong>💡 導師建議：</strong>${item.suggestion}
+                        <strong>${suggestionLabel}</strong>${cleanSuggestion}
                     </div>
                 ` : '';
 
@@ -193,8 +221,8 @@
                             <div><span class="badge ${badgeClass}">${badgeText}</span><span style="font-size: 0.8rem; color: #94a3b8; margin-left:10px;">${item.date}</span></div>
                         </div>
                         <div class="history-chat">
-                            <div class="user-bubble">${isListen ? '🎧 您的選擇' : '🗣️ 你說'}：${item.user_text}</div>
-                            <div class="ai-bubble">${isListen ? '📝 正確解答' : '🤖 AI 回'}：${item.ai_reply}</div>
+                            <div class="user-bubble">${userLabel}：${item.user_text}</div>
+                            <div class="ai-bubble">${aiLabel}：${item.ai_reply}</div>
                             ${suggestionHtml}
                         </div>
                     </div>
@@ -215,7 +243,7 @@
             });
         });
 
-        function renderChart(labels, speakValues, listenValues) {
+        function renderChart(labels, speakValues, listenValues, readValues, writeValues) {
             const ctx = document.getElementById('practiceChart').getContext('2d');
             new Chart(ctx, {
                 type: 'line',
@@ -223,7 +251,9 @@
                     labels: labels,
                     datasets: [
                         { label: '🗣️ 口說練習次數', data: speakValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', borderWidth: 3, fill: true, tension: 0.3 },
-                        { label: '🎧 聽力練習次數', data: listenValues, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.05)', borderWidth: 3, fill: true, tension: 0.3 }
+                        { label: '🎧 聽力練習次數', data: listenValues, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.05)', borderWidth: 3, fill: true, tension: 0.3 },
+                        { label: '📖 閱讀練習', data: readValues, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.05)', borderWidth: 3, fill: true, tension: 0.3 },
+                        { label: '✍️ 寫作練習', data: writeValues, borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.05)', borderWidth: 3, fill: true, tension: 0.3 }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
